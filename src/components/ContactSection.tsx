@@ -1,11 +1,9 @@
-import { useRef } from 'react'
+import { useRef, useEffect } from 'react'
 import { gsap, useGSAP } from '../lib/gsap'
 
-// 👉 Remplace par ton lien Cal.com après avoir créé ton compte sur app.cal.com
-const CAL_LINK = 'https://cal.com/jules-sore/premier-echange'
-
-const PRIMARY_SHADOW =
-  '0 1px 2px 0 rgba(5,26,36,0.1), 0 4px 4px 0 rgba(5,26,36,0.09), 0 9px 6px 0 rgba(5,26,36,0.05), 0 17px 7px 0 rgba(5,26,36,0.01), 0 26px 7px 0 rgba(5,26,36,0), inset 0 2px 8px 0 rgba(255,255,255,0.5)'
+// 👉 Remplace par ton slug Cal.com (pas l'URL complète)
+// Ex : si ton lien est cal.com/jules-sore/30min → mettre 'jules-sore/30min'
+const CAL_LINK = 'jules-sore/premier-echange'
 
 declare global {
   interface Window {
@@ -14,21 +12,49 @@ declare global {
 }
 
 export function ContactSection() {
-  const sectionRef = useRef<HTMLElement>(null)
-  const labelRef   = useRef<HTMLParagraphElement>(null)
-  const headingRef = useRef<HTMLHeadingElement>(null)
-  const rightRef   = useRef<HTMLDivElement>(null)
+  const sectionRef    = useRef<HTMLElement>(null)
+  const headerRef     = useRef<HTMLDivElement>(null)
+  const calRef        = useRef<HTMLDivElement>(null)
+
+  // Inline Cal.com embed — injecte dans #cal-inline
+  useEffect(() => {
+    const init = () => {
+      window.Cal?.('inline', {
+        elementOrSelector: '#cal-inline',
+        calLink: CAL_LINK,
+        layout: 'month_view',
+        config: { theme: 'light' },
+      })
+    }
+
+    if (window.Cal) {
+      init()
+    } else {
+      const tid = setInterval(() => {
+        if (window.Cal) { init(); clearInterval(tid) }
+      }, 80)
+      return () => clearInterval(tid)
+    }
+  }, [])
 
   useGSAP(() => {
-    gsap.fromTo(
-      [labelRef.current, headingRef.current, rightRef.current],
-      { opacity: 0, y: 32 },
+    gsap.fromTo(headerRef.current,
+      { opacity: 0, y: 28 },
       {
         opacity: 1, y: 0,
         duration: 0.9,
-        stagger: 0.14,
         ease: 'power3.out',
-        scrollTrigger: { trigger: sectionRef.current, start: 'top 80%', once: true },
+        scrollTrigger: { trigger: sectionRef.current, start: 'top 82%', once: true },
+      }
+    )
+    gsap.fromTo(calRef.current,
+      { opacity: 0, y: 40 },
+      {
+        opacity: 1, y: 0,
+        duration: 1.0,
+        ease: 'power3.out',
+        scrollTrigger: { trigger: sectionRef.current, start: 'top 75%', once: true },
+        delay: 0.15,
       }
     )
   }, { scope: sectionRef })
@@ -37,63 +63,55 @@ export function ContactSection() {
     <section
       id="contact"
       ref={sectionRef}
-      className="bg-[#F9F6F1] border-t border-[#0D212C]/8 py-24 md:py-36 px-6 md:px-12 lg:px-20"
+      className="bg-[#F9F6F1] border-t border-[#0D212C]/8 py-20 md:py-28 px-6 md:px-12 lg:px-20"
     >
-      <div className="max-w-[1200px] mx-auto">
+      <div className="max-w-[1100px] mx-auto flex flex-col gap-10">
 
-        <p
-          ref={labelRef}
-          className="font-mono text-[10px] tracking-widest uppercase text-[#0D212C]/35 mb-8"
+        {/* ── En-tête ──────────────────────────────────────────────────── */}
+        <div
+          ref={headerRef}
+          className="flex flex-col md:flex-row md:items-end justify-between gap-6"
           style={{ opacity: 0 }}
         >
-          Contact
-        </p>
-
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-12 md:gap-8">
-
-          <h2
-            ref={headingRef}
-            className="font-mondwest text-[44px] md:text-[64px] lg:text-[80px] leading-none tracking-tight text-[#0D212C]"
-            style={{ opacity: 0 }}
-          >
-            Prenons<br />rendez-vous.
-          </h2>
-
-          <div
-            ref={rightRef}
-            className="flex flex-col gap-5 md:items-end"
-            style={{ opacity: 0 }}
-          >
-            <p className="text-sm text-[#0D212C]/50 leading-relaxed md:text-right max-w-[260px]">
-              Réponse sous 24h.<br />
-              Premier échange gratuit,<br />
-              sans engagement.
+          <div className="flex flex-col gap-3">
+            <p className="font-mono text-[10px] tracking-widest uppercase text-[#0D212C]/35">
+              Contact
             </p>
+            <h2 className="font-mondwest text-[38px] md:text-[52px] lg:text-[64px] leading-none tracking-tight text-[#0D212C]">
+              Prenons<br />rendez-vous.
+            </h2>
+          </div>
 
-            {/* Bouton principal — ouvre le popup Cal.com */}
-            <button
-              data-cal-link={CAL_LINK}
-              data-cal-config='{"theme":"light"}'
-              className="inline-flex items-center gap-2 rounded-full px-8 py-3.5
-                         text-sm font-medium text-white bg-[#051A24]
-                         hover:opacity-80 active:scale-95 transition-all cursor-pointer"
-              style={{ boxShadow: PRIMARY_SHADOW }}
-            >
-              Réserver un créneau
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                <path d="M2.5 7h9M7.5 3l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-
+          <div className="flex flex-col gap-1.5 md:items-end pb-1">
+            <p className="text-sm text-[#0D212C]/50 leading-relaxed md:text-right">
+              Premier échange gratuit · sans engagement
+            </p>
             <a
               href="mailto:jules.sore13@gmail.com"
-              className="font-mono text-[10px] tracking-widest uppercase text-[#0D212C]/35 hover:text-[#0D212C]/70 transition-colors"
+              className="font-mono text-[10px] tracking-widest uppercase text-[#0D212C]/35 hover:text-[#0D212C]/65 transition-colors"
             >
               jules.sore13@gmail.com
             </a>
           </div>
-
         </div>
+
+        {/* ── Calendrier inline ─────────────────────────────────────────── */}
+        <div
+          style={{ opacity: 0 }}
+          ref={calRef}
+        >
+          <div
+            className="rounded-2xl overflow-hidden border border-[#0D212C]/8"
+            style={{ boxShadow: '0 4px 32px rgba(13,33,44,0.06), 0 1px 4px rgba(13,33,44,0.04)' }}
+          >
+            {/* Cal.com injecte le calendrier ici */}
+            <div
+              id="cal-inline"
+              style={{ width: '100%', height: '660px', overflow: 'hidden' }}
+            />
+          </div>
+        </div>
+
       </div>
     </section>
   )

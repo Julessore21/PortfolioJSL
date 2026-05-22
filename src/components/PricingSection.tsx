@@ -1,138 +1,211 @@
-import { useRef } from 'react'
-import type { MouseEvent } from 'react'
+import { useRef, useEffect } from 'react'
 import { gsap, ScrollTrigger, useGSAP } from '../lib/gsap'
-import { Button } from './Button'
 
-const BOOKING_URL = '#contact'
+const CAL_SLUG = 'jules-sore'
 
-const INSET_SHADOW = 'inset 0 1px 2px 0 rgba(255,255,255,0.08), inset 0 0 0 1px rgba(255,255,255,0.06)'
+type Card = {
+  id: string
+  category: string
+  title: string
+  duration: string
+  price: string
+  description: string
+  bullets: string[]
+  calLink: string
+  featured: boolean
+  badge?: string
+}
 
-function useTilt(ref: React.RefObject<HTMLDivElement | null>) {
-  const onMouseMove = (e: MouseEvent<HTMLDivElement>) => {
-    const el = ref.current
-    if (!el) return
-    const rect = el.getBoundingClientRect()
-    const x = (e.clientX - rect.left) / rect.width - 0.5
-    const y = (e.clientY - rect.top) / rect.height - 0.5
-    gsap.to(el, {
-      rotateY: x * 14,
-      rotateX: -y * 14,
-      transformPerspective: 800,
-      ease: 'power2.out',
-      duration: 0.35,
-    })
-  }
-  const onMouseLeave = () => {
-    const el = ref.current
-    if (!el) return
-    gsap.to(el, { rotateX: 0, rotateY: 0, duration: 0.7, ease: 'power3.out' })
-  }
-  return { onMouseMove, onMouseLeave }
+const CARDS: Card[] = [
+  {
+    id: 'echange',
+    category: 'Découverte',
+    title: 'Premier Échange',
+    duration: '30 min',
+    price: 'Gratuit',
+    description: "Un appel sans engagement pour cadrer ton besoin, valider la faisabilité et voir si le courant passe.",
+    bullets: [
+      'Présentation mutuelle',
+      'Analyse du besoin',
+      'Questions / réponses',
+      'Prochaines étapes',
+    ],
+    calLink: `${CAL_SLUG}/premier-echange`,
+    featured: false,
+  },
+  {
+    id: 'consultation',
+    category: 'Stratégie',
+    title: 'Consultation Projet',
+    duration: '60 min',
+    price: 'Sur devis',
+    description: "Session de travail approfondie pour définir l'architecture, la roadmap et l'estimation budgétaire.",
+    bullets: [
+      'Architecture IA / web',
+      'Roadmap & jalons',
+      'Estimation budgétaire',
+      'Choix de stack adaptés',
+    ],
+    calLink: `${CAL_SLUG}/consultation`,
+    featured: true,
+    badge: 'Le plus complet',
+  },
+  {
+    id: 'audit',
+    category: 'Diagnostic',
+    title: 'Audit Site Web',
+    duration: '45 min',
+    price: 'Gratuit',
+    description: "Revue technique et UX de ton site : performance, accessibilité, conversion et plan d'action prioritaire.",
+    bullets: [
+      'Audit performance',
+      'Revue UX / conversion',
+      'Analyse SEO basique',
+      "Plan d'action concret",
+    ],
+    calLink: `${CAL_SLUG}/audit`,
+    featured: false,
+  },
+]
+
+function useCalEmbed() {
+  useEffect(() => {
+    if ((window as Window & { Cal?: unknown }).Cal) return
+    const s = document.createElement('script')
+    s.type = 'text/javascript'
+    s.innerHTML = `(function(C,A,L){let p=function(a,ar){a.q.push(ar)};let d=C.document;C.Cal=C.Cal||function(){let cal=C.Cal;let ar=arguments;if(!cal.loaded){cal.ns={};cal.q=cal.q||[];d.head.appendChild(d.createElement("script")).src=A;cal.loaded=true}if(ar[0]===L){const api=function(){p(api,arguments)};const namespace=ar[1];api.q=api.q||[];if(typeof namespace==="string"){cal.ns[namespace]=cal.ns[namespace]||api;p(cal.ns[namespace],ar);p(cal,["initNamespace",namespace])}else p(cal,ar);return}p(cal,ar)}})(window,"https://app.cal.com/embed/embed.js","init");Cal("init",{origin:"https://cal.com"});`
+    document.head.appendChild(s)
+  }, [])
+}
+
+function CheckIcon() {
+  return (
+    <svg className="shrink-0 mt-0.5" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <path d="M2.5 7.5l3 3 6-6" stroke="#22c55e" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+
+function GlassCard({ card, wrapperRef }: { card: Card; wrapperRef: React.RefObject<HTMLDivElement | null> }) {
+  const cardClass = `glass-card h-full p-8 flex flex-col gap-5${card.featured ? ' glass-card--featured' : ''}`
+  const ctaClass = `btn-glass ${card.featured ? 'btn-glass--dark' : 'btn-glass--primary'} inline-flex items-center justify-center gap-2 px-7 py-3 text-sm mt-auto`
+
+  return (
+    <div ref={wrapperRef} className="h-full" style={{ opacity: 0 }}>
+      <article className={cardClass}>
+        {card.badge && (
+          <div className="absolute top-4 right-4 z-10">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-medium bg-[#0B1220]/10 text-[#0B1220]/65 border border-[#0B1220]/10">
+              {card.badge}
+            </span>
+          </div>
+        )}
+
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <span className="inline-block w-2 h-2 rounded-full bg-green-500 shrink-0" />
+            <span className="text-[10px] uppercase tracking-[0.18em] font-mono text-[#0B1220]/45">
+              {card.category}
+            </span>
+          </div>
+          <h3 className="font-mondwest text-[24px] leading-snug text-[#0B1220] mb-1">
+            {card.title}
+          </h3>
+          <p className="text-xs font-mono text-[#0B1220]/40">
+            {card.duration} · {card.price}
+          </p>
+        </div>
+
+        <p className="text-sm text-[#0B1220]/68 leading-relaxed">
+          {card.description}
+        </p>
+
+        <ul className="flex flex-col gap-2.5 flex-1">
+          {card.bullets.map(b => (
+            <li key={b} className="flex items-start gap-2.5 text-sm text-[#0B1220]/65">
+              <CheckIcon />
+              {b}
+            </li>
+          ))}
+        </ul>
+
+        <a
+          href={`https://cal.com/${card.calLink}`}
+          data-cal-link={card.calLink}
+          data-cal-config='{"layout":"month_view"}'
+          className={ctaClass}
+        >
+          Réserver {card.duration}
+        </a>
+      </article>
+    </div>
+  )
 }
 
 export function PricingSection() {
-  const sectionRef = useRef<HTMLDivElement>(null)
-  const darkCardRef = useRef<HTMLDivElement>(null)
-  const lightCardRef = useRef<HTMLDivElement>(null)
-  const darkTilt = useTilt(darkCardRef)
-  const lightTilt = useTilt(lightCardRef)
+  const sectionRef  = useRef<HTMLDivElement>(null)
+  const wrapper1Ref = useRef<HTMLDivElement>(null)
+  const wrapper2Ref = useRef<HTMLDivElement>(null)
+  const wrapper3Ref = useRef<HTMLDivElement>(null)
+
+  useCalEmbed()
 
   useGSAP(
     () => {
-      const dark = darkCardRef.current
-      const light = lightCardRef.current
-      if (!dark || !light) return
-
-      const trigger = {
-        trigger: sectionRef.current,
-        start: 'top 80%',
-        once: true,
-      }
-
-      gsap.fromTo(dark, { opacity: 0, x: -60, y: 30 }, {
-        opacity: 1, x: 0, y: 0, duration: 0.9, ease: 'power3.out',
-        scrollTrigger: trigger,
-      })
-      gsap.fromTo(light, { opacity: 0, x: 60, y: 30 }, {
-        opacity: 1, x: 0, y: 0, duration: 0.9, ease: 'power3.out', delay: 0.12,
-        scrollTrigger: trigger,
+      // ── Card entrance on scroll (wrapper only, CSS handles card transforms) ──
+      const wrappers = [wrapper1Ref.current, wrapper2Ref.current, wrapper3Ref.current]
+      const trigger = { trigger: sectionRef.current, start: 'top 80%', once: true }
+      wrappers.forEach((wrapper, i) => {
+        if (!wrapper) return
+        gsap.fromTo(
+          wrapper,
+          { opacity: 0, y: 40 },
+          { opacity: 1, y: 0, duration: 0.85, ease: 'power3.out', delay: i * 0.13, scrollTrigger: trigger }
+        )
       })
     },
     { scope: sectionRef, dependencies: [] }
   )
 
-  // Suppress "unused" warning — ScrollTrigger is used by the plugin internals
   void ScrollTrigger
 
   return (
-    <section className="w-full py-12 px-6" ref={sectionRef}>
-      <div className=" mr-130 grid grid-cols-1 md:grid-cols-2 gap-8 md:justify-end md:max-w-4xl md:ml-auto">
+    <section
+      id="pricing"
+      ref={sectionRef}
+      className="relative w-full py-28 px-6 overflow-hidden"
+    >
+      {/* ── Section header ──────────────────────────────────────────── */}
+      <div className="relative z-10 text-center mb-10">
+        <span className="text-[10px] uppercase tracking-[0.2em] font-mono text-[#0B1220]/50">
+          Discutons-en
+        </span>
+        <h2 className="font-mondwest text-[36px] lg:text-[46px] leading-[1.15] text-[#0B1220] mt-4 mb-4">
+          Trois manières de démarrer<br className="hidden sm:block" /> la conversation
+        </h2>
+        <p className="text-sm lg:text-base text-[#0B1220]/55 max-w-[380px] mx-auto leading-relaxed">
+          Choisissez le format adapté à votre projet.<br />
+          Aucun engagement pour les échanges gratuits.
+        </p>
+      </div>
 
-        {/* Dark card */}
-        <div
-          ref={darkCardRef}
-          {...darkTilt}
-          className="rounded-[40px]  pl-10 pr-10 md:pr-24 pt-3 pb-10 text-[#F6FCFF]"
-          style={{
-            backgroundColor: '#051A24',
-            boxShadow: INSET_SHADOW,
-            opacity: 0,
-            transformStyle: 'preserve-3d',
-            willChange: 'transform',
-          }}
-        >
-          <div className="flex items-center gap-2 mb-1 mt-4">
-            <div className="w-2 h-2 rounded-full bg-green-400" />
-            <span className="text-xs text-[#E0EBF0] opacity-70">Available</span>
+      {/* ── Chips strip ─────────────────────────────────────────────── */}
+      <div className="relative z-10 glass-chips">
+        {CARDS.map(card => (
+          <div key={card.id} className="glass-chip">
+            <span className="inline-block w-2 h-2 rounded-full bg-green-500 shrink-0" />
+            {card.title}
+            <span className="opacity-35">·</span>
+            <span className="opacity-55 font-normal">{card.duration}</span>
           </div>
-          <h3 className="text-[22px] font-medium text-[#F6FCFF] mb-2 mt-4">Partenariat mensuel</h3>
-          <p className="text-sm text-[#E0EBF0] opacity-80 mb-6 leading-relaxed">
-            Une équipe d'un. Je gère le projet de bout en bout,<br />
-            tu as un seul interlocuteur.
-          </p>
-          <div className="mb-8">
-            <span className="text-2xl font-semibold text-[#F6FCFF]">Sur demande</span>
-            <p className="text-sm text-[#E0EBF0] opacity-60 mt-0.5">Engagement mensuel</p>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Button variant="primary" size="sm" href={BOOKING_URL}>
-              Discutons-en
-            </Button>
-            <Button variant="secondary" size="sm" href={BOOKING_URL}>
-              Comment ça marche
-            </Button>
-          </div>
-        </div>
+        ))}
+      </div>
 
-        {/* Light card */}
-        <div
-          ref={lightCardRef}
-          {...lightTilt}
-          className="rounded-[40px] pl-10 pr-10 md:pr-24 pt-3 pb-10 bg-white"
-          style={{
-            boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
-            opacity: 0,
-            transformStyle: 'preserve-3d',
-            willChange: 'transform',
-          }}
-        >
-          <div className="flex items-center gap-2 mb-1 mt-4">
-            <div className="w-2 h-2 rounded-full bg-green-500" />
-            <span className="text-xs text-[#273C46] opacity-70">Available</span>
-          </div>
-          <h3 className="text-[22px] font-medium text-[#0D212C] mb-2 mt-4">Projet sur-mesure</h3>
-          <p className="text-sm text-[#051A24] opacity-70 mb-6 leading-relaxed">
-            Périmètre fixe, deadline fixe.<br />
-            Même rigueur, mêmes standards.
-          </p>
-          <div className="mb-8">
-            <span className="text-2xl font-semibold text-[#0D212C]">Sur devis</span>
-            <p className="text-sm text-[#273C46] opacity-60 mt-0.5">Selon scope</p>
-          </div>
-          <Button variant="tertiary" href={BOOKING_URL}>
-            Discutons-en
-          </Button>
-        </div>
+      {/* ── Cards grid ──────────────────────────────────────────────── */}
+      <div className="relative z-10 max-w-5xl mx-auto glass-cards-grid">
+        <GlassCard card={CARDS[0]} wrapperRef={wrapper1Ref} />
+        <GlassCard card={CARDS[1]} wrapperRef={wrapper2Ref} />
+        <GlassCard card={CARDS[2]} wrapperRef={wrapper3Ref} />
       </div>
     </section>
   )

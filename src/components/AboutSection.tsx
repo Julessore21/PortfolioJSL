@@ -2,7 +2,7 @@ import { useInViewAnimation } from '../hooks/useInViewAnimation'
 import profilImg from "../assets/profil.png";
 
 const STATS = [
-  { label: 'Domaines',    value: 'LLM · Transcription · Trading · Web' },
+  { label: 'Domaines',    value: 'LLM · Transcription · Web' },
   { label: 'Approche',    value: 'On-premise · Souveraine' },
   { label: 'Philosophie', value: 'Modèles légers · Frugale' },
   { label: 'Livraison',   value: 'POC → Production' },
@@ -86,11 +86,7 @@ export function AboutSection() {
             data-animate
             className="text-base lg:text-lg leading-relaxed text-[#0B1220]/75 max-w-prose"
           >
-            Alternance au CEA Cadarache sur MAIA-AUDIO — un service de
-            transcription audio souverain déployé en interne. En parallèle, je
-            construis AXON, conseil et produits IA pour entreprises qui veulent
-            garder leurs données. Conviction : l'IA utile est sobre, on-premise
-            quand il faut, et livrée du POC à la prod sans casser le budget.
+            Data Engineer en alternance au CEA. Fullstack et designer en parallèle. Je conçois, je code, je livre sur du logiciel, du web, de l'IA, et tout ce qui se code en général.
           </p>
 
           {/* Stat cards — 2×2 desktop, 1×4 mobile */}
