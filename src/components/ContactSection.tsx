@@ -2,7 +2,7 @@ import { useRef } from 'react'
 import { gsap, useGSAP } from '../lib/gsap'
 
 // 👉 Remplace par ton lien Cal.com après avoir créé ton compte sur app.cal.com
-const CAL_LINK = 'ton-username/30min'
+const CAL_LINK = 'https://cal.com/jules-sore/premier-echange'
 
 const PRIMARY_SHADOW =
   '0 1px 2px 0 rgba(5,26,36,0.1), 0 4px 4px 0 rgba(5,26,36,0.09), 0 9px 6px 0 rgba(5,26,36,0.05), 0 17px 7px 0 rgba(5,26,36,0.01), 0 26px 7px 0 rgba(5,26,36,0), inset 0 2px 8px 0 rgba(255,255,255,0.5)'

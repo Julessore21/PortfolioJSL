@@ -1,5 +1,5 @@
 import { useInViewAnimation } from '../hooks/useInViewAnimation'
-
+import profilImg from "../assets/profil.png";
 const PORTRAIT_URL =
   'https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260330_103804_7aa5494f-4d5b-432e-9dc7-20715275f143.png&w=1280&q=85'
 
@@ -55,11 +55,11 @@ export function AboutSection() {
             }}
           >
             <img
-              src={PORTRAIT_URL}
+              src={profilImg}
               alt="Jules Sore-Larregain"
-              className="w-full h-full object-cover object-top
+              className="w-full h-full object-cover object-top scale-[1.50]
                          transition-transform duration-[600ms] ease-out
-                         hover:scale-[1.02]"
+                         hover:scale-[1.55]"
             />
           </div>
         </div>
