@@ -1,0 +1,251 @@
+@import "tailwindcss";
+
+/* ─── Custom Fonts ─────────────────────────────────────────────────── */
+@font-face {
+  font-family: 'PP Neue Montreal';
+  src: url('https://assets.website-files.com/6009ec8cda7f305645c9d91b/60176f9bb43e36419997ecfe_PPNeueMontreal-Book.otf') format('opentype');
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'PP Neue Montreal';
+  src: url('https://assets.website-files.com/6009ec8cda7f305645c9d91b/60176f9b39c5673e51a86f5a_PPNeueMontreal-Medium.otf') format('opentype');
+  font-weight: 500;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'PP Mondwest';
+  src: url('/PPMondwest-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+
+/* ─── Theme ─────────────────────────────────────────────────────────── */
+@theme {
+  --font-sans: 'PP Neue Montreal', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mondwest: 'PP Mondwest', Georgia, 'Times New Roman', serif;
+
+  --animate-marquee: marquee 60s linear infinite;
+  --animate-marquee-mobile: marquee 60s linear infinite;
+  --animate-fade-in-up: fadeInUp 0.8s ease-out forwards;
+}
+
+/* ─── Base ───────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  font-family: 'PP Neue Montreal', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background-color: #F0E9E4;
+  color: #051A24;
+}
+
+/* ─── Keyframes ──────────────────────────────────────────────────────── */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+@keyframes fadeInUp {
+  0%   { opacity: 0; transform: translateY(30px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Utility classes ────────────────────────────────────────────────── */
+.animate-marquee {
+  animation: marquee 60s linear infinite;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.8s ease-out forwards;
+  opacity: 0;
+}
+
+.font-mondwest {
+  font-family: 'PP Mondwest', Georgia, 'Times New Roman', serif;
+}
+
+/* ─── Glass Button ───────────────────────────────────────────────────────── */
+.btn-glass {
+  position: relative;
+  overflow: hidden;
+  border-radius: 9999px;
+  cursor: pointer;
+  user-select: none;
+  text-decoration: none;
+  font-weight: 500;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) brightness(1.05);
+  backdrop-filter: blur(24px) saturate(180%) brightness(1.05);
+  transition:
+    transform 280ms cubic-bezier(0.4, 0.0, 0.2, 1),
+    box-shadow 280ms cubic-bezier(0.4, 0.0, 0.2, 1),
+    background 280ms cubic-bezier(0.4, 0.0, 0.2, 1),
+    border-color 280ms cubic-bezier(0.4, 0.0, 0.2, 1);
+  will-change: transform;
+
+  /*
+   * Liquid glass bubble sur fond clair :
+   * haut = blanc pur (lumière captée) / bas = gris-bleu froid (couleur ambiante du verre)
+   * c'est cette asymétrie haut/bas qui crée la sphéricité, pas la transparence seule
+   */
+  background: linear-gradient(
+    175deg,
+    rgba(255, 255, 255, 0.82) 0%,
+    rgba(255, 255, 255, 0.48) 45%,
+    rgba(208, 218, 232, 0.38) 100%
+  );
+  backdrop-filter: blur(20px) saturate(200%) brightness(1.02);
+  -webkit-backdrop-filter: blur(20px) saturate(200%) brightness(1.02);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  color: rgba(10, 16, 26, 0.86);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 1),
+    inset 0 -1px 0 rgba(140, 155, 180, 0.18),
+    0 6px 20px rgba(0, 0, 0, 0.13),
+    0 2px 5px rgba(0, 0, 0, 0.08),
+    0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+/* Sweep shine — hidden until hover */
+.btn-glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.4) 50%,
+    transparent 70%
+  );
+  transform: translateX(-150%);
+  transition: transform 700ms ease-out;
+  pointer-events: none;
+}
+
+/* Dome highlight — bosse lumineuse qui crée la convexité de la bulle */
+.btn-glass::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 4%;
+  right: 4%;
+  height: 48%;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.70) 0%,
+    rgba(255, 255, 255, 0.22) 50%,
+    transparent 100%
+  );
+  border-radius: 9999px 9999px 50% 50% / 9999px 9999px 40% 40%;
+  pointer-events: none;
+}
+
+.btn-glass:hover {
+  transform: translateY(-1px);
+  background: linear-gradient(
+    175deg,
+    rgba(255, 255, 255, 0.92) 0%,
+    rgba(255, 255, 255, 0.60) 45%,
+    rgba(208, 220, 238, 0.50) 100%
+  );
+  border-color: rgba(255, 255, 255, 0.88);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 1),
+    inset 0 -1px 0 rgba(140, 155, 180, 0.22),
+    0 10px 28px rgba(0, 0, 0, 0.16),
+    0 3px 8px rgba(0, 0, 0, 0.10),
+    0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.btn-glass:hover::before {
+  transform: translateX(150%);
+}
+
+.btn-glass:active {
+  transform: translateY(0) scale(0.98);
+  transition-duration: 100ms;
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.5),
+    0 4px 12px -4px rgba(0, 0, 0, 0.15);
+}
+
+.btn-glass:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px rgba(255, 255, 255, 0.6),
+    0 0 0 4px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.6),
+    inset 0 -1px 0 0 rgba(0, 0, 0, 0.04),
+    0 8px 24px -8px rgba(0, 0, 0, 0.15),
+    0 2px 6px -2px rgba(0, 0, 0, 0.08);
+}
+
+.btn-glass:disabled,
+.btn-glass[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Primary — même verre, hiérarchie par font-weight uniquement */
+.btn-glass--primary {
+  font-weight: 600;
+}
+
+/* Secondary — verre neutre hérité, aucune surcharge */
+.btn-glass--secondary {}
+
+/* ─── Glass Nav ──────────────────────────────────────────────────────────── */
+.nav-glass {
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  backdrop-filter: blur(20px) saturate(160%);
+  background: linear-gradient(135deg, rgba(180, 185, 195, 0.28) 0%, rgba(160, 168, 180, 0.18) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    0 4px 12px rgba(0, 0, 0, 0.10),
+    0 16px 40px rgba(0, 0, 0, 0.08),
+    0 32px 64px rgba(0, 0, 0, 0.04);
+}
+
+/* ─── Legacy shadow utilities (cards only) ───────────────────────────────── */
+.shadow-card {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+
+/* ─── Stat Card — Liquid Glass (même langage que .btn-glass) ─────────────── */
+.stat-card-glass {
+  background: linear-gradient(135deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.08) 100%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%) brightness(1.03);
+  backdrop-filter: blur(20px) saturate(180%) brightness(1.03);
+  border: 1px solid rgba(255,255,255,0.45);
+  border-radius: 16px;
+  padding: 18px 20px;
+  box-shadow:
+    inset 0 1px 0 0 rgba(255,255,255,0.5),
+    inset 0 -1px 0 0 rgba(0,0,0,0.04),
+    0 4px 16px -4px rgba(0,0,0,0.1);
+  transition:
+    transform 280ms cubic-bezier(0.4, 0.0, 0.2, 1),
+    background 280ms cubic-bezier(0.4, 0.0, 0.2, 1),
+    box-shadow 280ms cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.stat-card-glass:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.14) 100%);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255,255,255,0.6),
+    inset 0 -1px 0 0 rgba(0,0,0,0.04),
+    0 8px 24px -6px rgba(0,0,0,0.13);
+}
