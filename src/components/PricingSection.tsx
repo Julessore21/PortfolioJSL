@@ -66,7 +66,7 @@ export function PricingSection() {
 
   return (
     <section className="w-full py-12 px-6" ref={sectionRef}>
-      <div className=" mr-144 grid grid-cols-1 md:grid-cols-2 gap-8 md:justify-end md:max-w-4xl md:ml-auto">
+      <div className=" mr-130 grid grid-cols-1 md:grid-cols-2 gap-8 md:justify-end md:max-w-4xl md:ml-auto">
 
         {/* Dark card */}
         <div
