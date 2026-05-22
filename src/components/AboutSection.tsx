@@ -1,7 +1,5 @@
 import { useInViewAnimation } from '../hooks/useInViewAnimation'
 import profilImg from "../assets/profil.png";
-const PORTRAIT_URL =
-  'https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260330_103804_7aa5494f-4d5b-432e-9dc7-20715275f143.png&w=1280&q=85'
 
 const STATS = [
   { label: 'Domaines',    value: 'LLM · Transcription · Trading · Web' },
