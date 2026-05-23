@@ -140,7 +140,7 @@ export function PartnerSection() {
     <section ref={sectionRef} className="w-full py-12 px-6">
       <div
         ref={containerRef}
-        className="relative max-w-7xl mx-auto rounded-[40px] py-48 flex flex-col items-center justify-center overflow-hidden"
+        className="relative max-w-300 mx-auto rounded-3xl md:rounded-[40px] py-20 md:py-36 lg:py-48 flex flex-col items-center justify-center overflow-hidden"
         style={{ boxShadow: '0 2px 24px rgba(0,0,0,0.06)' }}
       >
         {/* Word-by-word heading */}

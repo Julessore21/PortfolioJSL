@@ -11,7 +11,7 @@ const STATS = [
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
     <div data-animate className="stat-card-glass">
-      <span className="block text-[10px] uppercase tracking-[0.18em] font-mono text-[#0B1220]/50 mb-2">
+      <span className="block text-[10px] uppercase tracking-[0.18em] text-[#0B1220]/50 mb-2">
         {label}
       </span>
       <span className="block text-[14px] font-medium text-[#0B1220] leading-snug">
@@ -28,7 +28,7 @@ export function AboutSection() {
     <section className="py-24 lg:py-32 px-6">
       <div
         ref={ref}
-        className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-12 lg:gap-16 items-start"
+        className="max-w-300 mx-auto grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-12 lg:gap-16 items-start"
       >
         {/* ── Left: Portrait ─────────────────────────────────────────────── */}
         <div data-animate className="relative w-full max-w-[380px] mx-auto lg:mx-0">
@@ -67,7 +67,7 @@ export function AboutSection() {
           {/* Eyebrow */}
           <span
             data-animate
-            className="text-[10px] uppercase tracking-[0.2em] font-mono text-[#0B1220]/50"
+            className="text-[10px] uppercase tracking-[0.2em] text-[#0B1220]/50"
           >
             À propos
           </span>

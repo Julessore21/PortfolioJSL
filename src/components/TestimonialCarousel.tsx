@@ -64,7 +64,6 @@ const TESTIMONIALS: Testimonial[] = [
 ]
 
 const TRIPLED = [...TESTIMONIALS, ...TESTIMONIALS, ...TESTIMONIALS]
-const CARD_WIDTH = 427.5
 const GAP = 24
 
 function QuoteIcon() {
@@ -84,6 +83,19 @@ export function TestimonialCarousel() {
   const [isAnimating, setIsAnimating] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
   const trackRef = useRef<HTMLDivElement>(null)
+  const [cardWidth, setCardWidth] = useState(427.5)
+
+  useEffect(() => {
+    const update = () => {
+      const w = window.innerWidth
+      if (w < 480) setCardWidth(w * 0.88)
+      else if (w < 768) setCardWidth(w * 0.82)
+      else setCardWidth(427.5)
+    }
+    update()
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
+  }, [])
 
   const goTo = useCallback((index: number) => {
     if (isAnimating) return
@@ -129,7 +141,7 @@ export function TestimonialCarousel() {
     }
   }, [current])
 
-  const translateX = -(current * (CARD_WIDTH + GAP))
+  const translateX = -(current * (cardWidth + GAP))
 
   return (
     <section className="w-full py-20 overflow-hidden">
@@ -137,13 +149,13 @@ export function TestimonialCarousel() {
         {/* Header */}
         <div
           data-animate
-          className="flex items-start justify-between md:max-w-4xl md:ml-auto mb-10"
+          className="flex flex-col sm:flex-row sm:items-start sm:justify-between md:max-w-4xl md:ml-auto mb-10 gap-4"
           style={{ animationDelay: '0.1s' }}
         >
           <h2 className="text-[32px] md:text-[40px] lg:text-[44px] leading-[1.1] text-[#0D212C] tracking-tight">
             Ce que disent les <span className="font-mondwest">builders</span>
           </h2>
-          <div className="flex flex-col items-end gap-1 pt-2">
+          <div className="flex flex-col sm:items-end gap-1 sm:pt-2 shrink-0">
             <div className="flex gap-0.5">
               {Array.from({ length: 5 }).map((_, i) => (
                 <Star key={i} className="w-5 h-5" fill="black" stroke="none" />
@@ -176,7 +188,7 @@ export function TestimonialCarousel() {
                   key={`${t.id}-${i}`}
                   className="shrink-0 rounded-4xl md:rounded-[40px] px-6 md:pl-10 md:pr-24 py-8 bg-white"
                   style={{
-                    width: `${CARD_WIDTH}px`,
+                    width: `${cardWidth}px`,
                     boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
                     opacity: isCurrent ? 1 : 0.6,
                     transform: isCurrent ? 'scale(1)' : 'scale(0.97)',

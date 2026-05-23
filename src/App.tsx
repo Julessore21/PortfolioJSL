@@ -1,13 +1,19 @@
-import { useRef } from 'react'
+import { useRef, useState, useEffect, useCallback } from 'react'
+import heroVideo from './assets/download.mp4'
 import { gsap, useGSAP } from './lib/gsap'
+import { Splashscreen } from './components/Splashscreen'
 import { AboutSection } from './components/AboutSection'
 import { PricingSection } from './components/PricingSection'
-import { TestimonialCarousel } from './components/TestimonialCarousel'
 import { PartnerSection } from './components/PartnerSection'
 import { ContactSection } from './components/ContactSection'
 import { Footer } from './components/Footer'
 import { CopyrightBar } from './components/CopyrightBar'
 import { BottomNav } from './components/BottomNav'
+
+const PRELOAD_ASSETS = {
+  videos: [heroVideo],
+  images: [] as string[],
+}
 
 const MARQUEE_GIFS = [
   'https://motionsites.ai/assets/hero-space-voyage-preview-eECLH3Yc.gif',
@@ -18,7 +24,12 @@ const MARQUEE_GIFS = [
 ]
 
 
-function HeroSection() {
+interface HeroProps {
+  isRevealing: boolean
+  onRevealComplete?: () => void
+}
+
+function HeroSection({ isRevealing, onRevealComplete }: HeroProps) {
   const sectionRef = useRef<HTMLElement>(null)
   const videoRef   = useRef<HTMLVideoElement>(null)
   const nameRef    = useRef<HTMLDivElement>(null)
@@ -27,92 +38,20 @@ function HeroSection() {
   const bottomRef  = useRef<HTMLDivElement>(null)
   const headingRef = useRef<HTMLHeadingElement>(null)
   const descRef    = useRef<HTMLParagraphElement>(null)
-  const btnsRef    = useRef<HTMLDivElement>(null)
   const badgeRef   = useRef<HTMLDivElement>(null)
 
+  // ── Initial hidden state (all elements invisible + blurred before reveal) ──
+  useEffect(() => {
+    gsap.set(
+      [nameRef.current, taglineRef.current, headingRef.current, descRef.current, badgeRef.current],
+      { y: 16, filter: 'blur(8px)' }
+    )
+    gsap.set(videoRef.current, { scale: 0.95, filter: 'blur(12px)' })
+    gsap.set('.js-bottom-nav', { y: 64, opacity: 0 })
+  }, [])
+
+  // ── Scroll parallax (always active, independent of reveal) ──────────────
   useGSAP(() => {
-    const nameChars = gsap.utils.toArray<HTMLElement>('.tw-char', nameRef.current)
-    const cursor    = cursorRef.current!
-
-    // Curseur positionné avant le premier char au départ
-    if (nameChars.length > 0) nameChars[0].before(cursor)
-
-    // ── Entrance: tous les éléments sauf le nom ───────────────────────────
-    gsap.timeline({ defaults: { ease: 'power3.out' } })
-      .fromTo(videoRef.current,
-        { opacity: 0, scale: 0.86 },
-        { opacity: 1, scale: 1, duration: 1.8, ease: 'power2.out' }
-      )
-      .fromTo(taglineRef.current,
-        { opacity: 0, x: 20 },
-        { opacity: 1, x: 0, duration: 0.55 },
-        '-=1.0'
-      )
-      .fromTo(headingRef.current,
-        { opacity: 0, y: 30 },
-        { opacity: 1, y: 0, duration: 0.8 },
-        '-=0.4'
-      )
-      .fromTo(descRef.current,
-        { opacity: 0, y: 18 },
-        { opacity: 1, y: 0, duration: 0.65 },
-        '-=0.5'
-      )
-      .fromTo(btnsRef.current,
-        { opacity: 0, y: 14, scale: 0.94 },
-        { opacity: 1, y: 0, scale: 1, duration: 0.55 },
-        '-=0.42'
-      )
-      .fromTo(badgeRef.current,
-        { opacity: 0, x: 18 },
-        { opacity: 1, x: 0, duration: 0.45 },
-        '-=0.5'
-      )
-
-    // ── Curseur : apparaît à t=0.65s puis clignote en continu ────────────
-    gsap.timeline({ delay: 0.65 })
-      .set(cursor, { opacity: 1 })
-      .to(cursor, {
-        opacity: 0,
-        duration: 0.48,
-        repeat: -1,
-        yoyo: true,
-        ease: 'sine.inOut',
-        repeatDelay: 0.12,
-      })
-
-    // ── Nom : machine à écrire avec curseur qui suit chaque lettre ────────
-    const TYPE_SPEED = 0.105  // secondes entre chaque frappe
-    const DEL_SPEED  = 0.062  // secondes entre chaque suppression
-    const HOLD       = 2.4    // pause sur le nom complet
-    const LOOP_PAUSE = 0.7    // pause avant de recommencer
-
-    const typeTl = gsap.timeline({ repeat: -1, delay: 0.8 })
-
-    // Phase écriture : curseur se déplace APRÈS chaque lettre qui apparaît
-    nameChars.forEach((char, i) => {
-      typeTl.call(() => {
-        char.after(cursor)       // curseur suit la lettre qui vient d'être tapée
-        gsap.set(char, { opacity: 1 })
-      }, [], i * TYPE_SPEED)
-    })
-
-    // Pause sur le nom complet
-    typeTl.to({}, { duration: HOLD }, nameChars.length * TYPE_SPEED)
-
-    // Phase suppression : curseur se déplace AVANT chaque lettre supprimée
-    const deleteStart = nameChars.length * TYPE_SPEED + HOLD
-    ;[...nameChars].reverse().forEach((char, i) => {
-      typeTl.call(() => {
-        char.before(cursor)      // curseur recule avant la lettre qui disparaît
-        gsap.set(char, { opacity: 0 })
-      }, [], deleteStart + i * DEL_SPEED)
-    })
-
-    // Pause avant le prochain cycle
-    typeTl.to({}, { duration: LOOP_PAUSE }, deleteStart + nameChars.length * DEL_SPEED)
-
-    // ── Scroll parallax ───────────────────────────────────────────────────
     gsap.to(videoRef.current, {
       y: -50, ease: 'none',
       scrollTrigger: { trigger: sectionRef.current, start: 'top top', end: 'bottom top', scrub: 2.5 },
@@ -123,19 +62,98 @@ function HeroSection() {
     })
   }, { scope: sectionRef })
 
+  // ── Orchestrated reveal (triggered when splash exits) ────────────────────
+  useEffect(() => {
+    if (!isRevealing) return
+
+    const nameChars = gsap.utils.toArray<HTMLElement>('.tw-char', nameRef.current)
+    const cursor    = cursorRef.current!
+    if (nameChars.length > 0) nameChars[0].before(cursor)
+
+    const EASE    = 'expo.out'
+    const DUR     = 2.2
+    const STAGGER = 0.45
+    const START   = 0.4
+
+    // Sequential reveal: each element fades up with blur dissolve
+    const revealTl = gsap.timeline()
+    revealTl
+      .to(nameRef.current,    { opacity: 1, y: 0, filter: 'blur(0px)', duration: DUR, ease: EASE }, START)
+      .to(taglineRef.current, { opacity: 1, y: 0, filter: 'blur(0px)', duration: DUR, ease: EASE }, START + STAGGER)
+      .to(headingRef.current, { opacity: 1, y: 0, filter: 'blur(0px)', duration: DUR, ease: EASE }, START + STAGGER * 2)
+      .to(descRef.current,    { opacity: 1, y: 0, filter: 'blur(0px)', duration: DUR, ease: EASE }, START + STAGGER * 3)
+      .to(badgeRef.current,   { opacity: 1, y: 0, filter: 'blur(0px)', duration: DUR, ease: EASE }, START + STAGGER * 4)
+      // Arm
+      .to(videoRef.current, {
+        opacity: 1,
+        scale: 1,
+        filter: 'blur(0px)',
+        duration: 2.8,
+        ease: 'expo.out',
+        onStart: () => { videoRef.current?.play() },
+      }, START + STAGGER * 4 + 1.0)
+      // BottomNav — very last, slides up from below
+      .to('.js-bottom-nav', {
+        y: 0,
+        opacity: 1,
+        duration: 1.6,
+        ease: 'expo.out',
+        onComplete: onRevealComplete,
+      }, START + STAGGER * 4 + 1.0 + 1.2)
+
+    // Cursor blink — starts once nameRef has mostly settled
+    const cursorTl = gsap.timeline({ delay: START + 0.6 })
+      .set(cursor, { opacity: 1 })
+      .to(cursor, {
+        opacity: 0,
+        duration: 0.48,
+        repeat: -1,
+        yoyo: true,
+        ease: 'sine.inOut',
+        repeatDelay: 0.12,
+      })
+
+    // Typewriter loop — starts shortly after name appears
+    const TYPE_SPEED = 0.105
+    const DEL_SPEED  = 0.062
+    const HOLD       = 2.4
+    const LOOP_PAUSE = 0.7
+
+    const typeTl = gsap.timeline({ repeat: -1, delay: START + 0.7 })
+    nameChars.forEach((char, i) => {
+      typeTl.call(() => {
+        char.after(cursor)
+        gsap.set(char, { opacity: 1 })
+      }, [], i * TYPE_SPEED)
+    })
+    typeTl.to({}, { duration: HOLD }, nameChars.length * TYPE_SPEED)
+    const deleteStart = nameChars.length * TYPE_SPEED + HOLD
+    ;[...nameChars].reverse().forEach((char, i) => {
+      typeTl.call(() => {
+        char.before(cursor)
+        gsap.set(char, { opacity: 0 })
+      }, [], deleteStart + i * DEL_SPEED)
+    })
+    typeTl.to({}, { duration: LOOP_PAUSE }, deleteStart + nameChars.length * DEL_SPEED)
+
+    return () => {
+      revealTl.kill()
+      cursorTl.kill()
+      typeTl.kill()
+    }
+  }, [isRevealing, onRevealComplete])
+
   return (
     <section ref={sectionRef} className="relative min-h-screen bg-[#F9F6F1] overflow-hidden">
 
       {/* ─── HAND — truly centered, large, borderless ──────────────────────────────
           mix-blend-mode:multiply makes the white video bg disappear into the page crème */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none max-md:opacity-20">
         <video
           ref={videoRef}
-          autoPlay muted loop playsInline
-          className="h-[56vh] md:h-[64vh] lg:h-[70vh] w-auto object-contain
-                     translate-y-[12%]
-                     max-md:opacity-20"
-          src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260508_215831_c6a8989c-d716-4d8d-8745-e972a2eec711.mp4"
+          muted loop playsInline
+          src={heroVideo}
+          className="h-[56vh] md:h-[64vh] lg:h-[70vh] w-auto object-contain translate-y-[12%]"
           style={{
             opacity: 0,
             mixBlendMode: 'multiply',
@@ -150,6 +168,7 @@ function HeroSection() {
       <div
         ref={nameRef}
         className="absolute top-8 left-6 md:top-12 md:left-12 lg:top-16 lg:left-20 z-10"
+        style={{ opacity: 0 }}
       >
         <h1
           className="font-mondwest text-[28px] md:text-[38px] lg:text-[50px]
@@ -180,7 +199,7 @@ function HeroSection() {
         className="absolute top-8 right-6 md:top-12 md:right-12 lg:top-16 lg:right-20 z-10 text-right"
         style={{ opacity: 0 }}
       >
-        <p className="font-mono text-[9px] md:text-[10px] text-[#0D212C]/50 leading-loose tracking-widest uppercase">
+        <p className="text-[9px] md:text-[10px] text-[#0D212C]/50 leading-loose tracking-widest uppercase">
           Freelance IA &amp; Dev Web<br />
           Aix-en-Provence
         </p>
@@ -190,7 +209,7 @@ function HeroSection() {
       <div
         ref={bottomRef}
         className="absolute bottom-10 left-6 md:bottom-14 md:left-12 lg:bottom-18 lg:left-20
-                   z-10 flex flex-col gap-3 md:gap-4 max-w-xs md:max-w-sm lg:max-w-md"
+                   z-10 flex flex-col gap-3 md:gap-4 max-w-55 sm:max-w-xs md:max-w-sm lg:max-w-md"
       >
         <h2
           ref={headingRef}
@@ -216,7 +235,7 @@ function HeroSection() {
       {/* ─── BOTTOM-RIGHT — availability ──────────────────────────────────────────── */}
       <div
         ref={badgeRef}
-        className="absolute bottom-12 right-6 md:bottom-16 md:right-12 lg:bottom-18 lg:right-20 z-10"
+        className="absolute bottom-12 right-6 md:bottom-16 md:right-12 lg:bottom-18 lg:right-20 z-10 hidden sm:block"
         style={{ opacity: 0 }}
       >
         <div className="flex items-center gap-2">
@@ -224,7 +243,7 @@ function HeroSection() {
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
             <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
           </span>
-          <span className="font-mono text-[9px] md:text-[10px] text-[#0D212C]/55 tracking-wide">
+          <span className="text-[9px] md:text-[10px] text-[#0D212C]/55 tracking-wide">
             Disponible — 2 slots
           </span>
         </div>
@@ -312,18 +331,38 @@ function MarqueeSection() {
 }
 
 export default function App() {
+  const [splashDone, setSplashDone]   = useState(false)
+  const [isRevealing, setIsRevealing] = useState(false)
+
+  // Scroll lock lives here — released by HeroSection after arm animation ends
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+  }, [])
+
+  const handleRevealComplete = useCallback(() => {
+    document.body.style.overflow = ''
+  }, [])
+
   return (
-    <div className="bg-[#F9F6F1] min-h-screen overflow-x-hidden">
-      <HeroSection />
-      <AboutSection />
-      <MarqueeSection />
-      <PricingSection />
-      <TestimonialCarousel />
-      <PartnerSection />
-      <ContactSection />
-      <Footer />
-      <CopyrightBar />
-      <BottomNav />
-    </div>
+    <>
+      {!splashDone && (
+        <Splashscreen
+          assets={PRELOAD_ASSETS}
+          onExit={() => setIsRevealing(true)}
+          onDone={() => setSplashDone(true)}
+        />
+      )}
+      <div className="bg-[#F9F6F1] min-h-screen overflow-x-hidden">
+        <HeroSection isRevealing={isRevealing} onRevealComplete={handleRevealComplete} />
+        <AboutSection />
+        <MarqueeSection />
+        <PricingSection />
+        <PartnerSection />
+        <ContactSection />
+        <Footer />
+        <CopyrightBar />
+        <BottomNav />
+      </div>
+    </>
   )
 }

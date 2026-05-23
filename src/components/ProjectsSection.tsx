@@ -54,18 +54,18 @@ export function ProjectsSection() {
   return (
     <section
       ref={sectionRef}
-      className="h-screen w-full overflow-hidden"
+      className="h-screen w-full overflow-hidden py-6 px-6"
     >
       <div
         ref={trackRef}
-        className="flex h-full"
+        className="flex h-full gap-4"
         style={{ willChange: 'transform' }}
       >
         {PROJECTS.map((project, i) => (
           <div
             key={project.name}
-            className="relative shrink-0 overflow-hidden"
-            style={{ width: '100vw', height: '100vh' }}
+            className="relative shrink-0 overflow-hidden rounded-3xl"
+            style={{ width: 'calc(100vw - 3rem)', height: '100%' }}
           >
             {/* Full-bleed background gif */}
             <img
@@ -84,13 +84,13 @@ export function ProjectsSection() {
             />
 
             {/* Slide index */}
-            <span className="absolute top-10 right-10 font-mono text-xs text-white/40 tracking-widest">
+            <span className="absolute top-5 right-5 md:top-10 md:right-10 text-xs text-white/40 tracking-widest">
               {String(i + 1).padStart(2, '0')} / {String(PROJECTS.length).padStart(2, '0')}
             </span>
 
             {/* Text block */}
-            <div className="absolute bottom-16 left-12 md:left-20 max-w-sm md:max-w-lg">
-              <h3 className="font-mondwest text-5xl md:text-7xl font-semibold text-white mb-4 leading-none tracking-tight">
+            <div className="absolute bottom-8 left-6 md:bottom-16 md:left-12 lg:left-20 max-w-60 sm:max-w-sm md:max-w-lg">
+              <h3 className="font-mondwest text-4xl md:text-5xl lg:text-7xl font-semibold text-white mb-3 md:mb-4 leading-none tracking-tight">
                 {project.name}
               </h3>
               <p className="text-sm md:text-base text-white/75 leading-relaxed">

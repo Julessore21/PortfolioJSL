@@ -3,7 +3,7 @@ import { Button } from './Button'
 
 export function Footer() {
   return (
-    <footer className="max-w-[1200px] mx-auto px-6 py-12">
+    <footer className="max-w-300 mx-auto px-6 py-12">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
         <Button variant="primary" href="#contact">
           Discutons-en
