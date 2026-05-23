@@ -16,20 +16,14 @@ export function usePreloader(
 ): PreloaderResult {
   const [visualProgress, setVisualProgress] = useState(0)
   const [isReady, setIsReady] = useState(false)
-  const assetProgressRef = useRef(0) // 0-100, gating ceiling
-  const stepRef = useRef(0)          // current displayed step
+  const allDoneRef = useRef(false)
+  const stepRef = useRef(0)
 
   useEffect(() => {
     let cancelled = false
     const videos = assets.videos ?? []
     const images = assets.images ?? []
     const total = videos.length + images.length + 1
-    let resolved = 0
-
-    const onResolve = () => {
-      resolved = Math.min(resolved + 1, total)
-      assetProgressRef.current = Math.round((resolved / total) * 100)
-    }
 
     const videoPromises = videos.map(src =>
       new Promise<void>(resolve => {
@@ -42,7 +36,7 @@ export function usePreloader(
         el.addEventListener('error', done, { once: true })
         el.src = src
         el.load()
-      }).then(onResolve)
+      })
     )
 
     const imagePromises = images.map(src =>
@@ -51,48 +45,46 @@ export function usePreloader(
         img.onload = () => resolve()
         img.onerror = () => resolve()
         img.src = src
-      }).then(onResolve)
+      })
     )
 
-    const fontPromise = document.fonts.ready.then(onResolve)
-
-    // Step interval: spread 100 steps across minDuration
-    const stepInterval = Math.max(10, Math.floor(minDuration / 100))
-
-    const startTime = Date.now()
-    let allDone = false
+    const fontPromise = document.fonts.ready
 
     Promise.all([...videoPromises, ...imagePromises, fontPromise]).then(() => {
-      assetProgressRef.current = 100
-      allDone = true
+      if (!cancelled) allDoneRef.current = true
     })
+
+    // Counter advances purely by time — 1 step every stepInterval ms
+    // No asset-gating mid-way; isReady waits for both 100% and allDone
+    const stepInterval = Math.max(8, Math.floor(minDuration / 100))
+    let elapsed = 0
 
     const id = setInterval(() => {
       if (cancelled) return
+      elapsed += stepInterval
 
-      const elapsed = Date.now() - startTime
-      // Time-based ceiling: how far we'd be at this point if assets were the bottleneck
-      const timeCeiling = Math.min(100, Math.floor((elapsed / minDuration) * 100))
-      // Actual ceiling: min of time-based and asset-based
-      const ceiling = Math.min(timeCeiling, assetProgressRef.current)
-
-      if (stepRef.current < ceiling) {
+      if (stepRef.current < 100) {
         stepRef.current += 1
         setVisualProgress(stepRef.current)
       }
 
-      // Once we hit 100 on both axes, signal ready
-      if (stepRef.current >= 100 && allDone) {
+      if (stepRef.current >= 100 && allDoneRef.current) {
         clearInterval(id)
         if (!cancelled) setIsReady(true)
       }
     }, stepInterval)
 
+    // Safety: if assets take longer than 2× minDuration, force ready
+    const safetyTimeout = setTimeout(() => {
+      allDoneRef.current = true
+    }, minDuration * 2)
+
     return () => {
       cancelled = true
       clearInterval(id)
+      clearTimeout(safetyTimeout)
     }
-  }, []) // assets read once on mount
+  }, [])
 
   return { progress: visualProgress, isReady }
 }

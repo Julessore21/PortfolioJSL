@@ -161,7 +161,7 @@ export function Splashscreen({ assets = {}, onExit, onDone }: SplashscreenProps)
     // Only the text color oscillates — background stays fixed
     gsap.to(counter, {
       color: TEXT_FLASH,
-      duration: 0.12,
+      duration: 0.2,
       repeat: 5,
       yoyo: true,
       ease: 'none',
@@ -207,7 +207,7 @@ export function Splashscreen({ assets = {}, onExit, onDone }: SplashscreenProps)
         style={{
           position: 'relative',
           fontFamily: MONO,
-          fontSize: 'clamp(2rem, 6vw, 5rem)',
+          fontSize: 'clamp(1.4rem, 4vw, 3.2rem)',
           fontWeight: 600,
           color: TEXT_COLOR,
           lineHeight: 1,

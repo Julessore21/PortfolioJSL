@@ -40,17 +40,20 @@ function HeroSection({ isRevealing, onRevealComplete }: HeroProps) {
   const descRef    = useRef<HTMLParagraphElement>(null)
   const badgeRef   = useRef<HTMLDivElement>(null)
 
-  // ── Initial hidden state (all elements invisible + blurred before reveal) ──
+  // ── Initial hidden state ─────────────────────────────────────────────────
   useEffect(() => {
+    // Name container visible — individual chars hidden in JSX (opacity:0)
+    gsap.set(nameRef.current, { opacity: 1 })
+    // Other texts: fully visible but clipped from the right
     gsap.set(
-      [nameRef.current, taglineRef.current, headingRef.current, descRef.current, badgeRef.current],
-      { y: 16, filter: 'blur(8px)' }
+      [taglineRef.current, headingRef.current, descRef.current, badgeRef.current],
+      { opacity: 1, clipPath: 'inset(0 100% 0 0)' }
     )
-    gsap.set(videoRef.current, { scale: 0.95, filter: 'blur(12px)' })
+    gsap.set(videoRef.current, { scale: 0.95, filter: 'blur(12px)', opacity: 0 })
     gsap.set('.js-bottom-nav', { y: 64, opacity: 0 })
   }, [])
 
-  // ── Scroll parallax (always active, independent of reveal) ──────────────
+  // ── Scroll parallax ──────────────────────────────────────────────────────
   useGSAP(() => {
     gsap.to(videoRef.current, {
       y: -50, ease: 'none',
@@ -62,92 +65,63 @@ function HeroSection({ isRevealing, onRevealComplete }: HeroProps) {
     })
   }, { scope: sectionRef })
 
-  // ── Orchestrated reveal (triggered when splash exits) ────────────────────
+  // ── Orchestrated reveal ──────────────────────────────────────────────────
   useEffect(() => {
     if (!isRevealing) return
 
-    const nameChars = gsap.utils.toArray<HTMLElement>('.tw-char', nameRef.current)
-    const cursor    = cursorRef.current!
-    if (nameChars.length > 0) nameChars[0].before(cursor)
-
-    const EASE    = 'expo.out'
-    const DUR     = 2.2
-    const STAGGER = 0.45
     const START   = 0.4
+    const STAGGER = 0.45
+    const TYPE_SPEED = 0.075  // seconds per character
 
-    // Sequential reveal: each element fades up with blur dissolve
-    const revealTl = gsap.timeline()
-    revealTl
-      .to(nameRef.current,    { opacity: 1, y: 0, filter: 'blur(0px)', duration: DUR, ease: EASE }, START)
-      .to(taglineRef.current, { opacity: 1, y: 0, filter: 'blur(0px)', duration: DUR, ease: EASE }, START + STAGGER)
-      .to(headingRef.current, { opacity: 1, y: 0, filter: 'blur(0px)', duration: DUR, ease: EASE }, START + STAGGER * 2)
-      .to(descRef.current,    { opacity: 1, y: 0, filter: 'blur(0px)', duration: DUR, ease: EASE }, START + STAGGER * 3)
-      .to(badgeRef.current,   { opacity: 1, y: 0, filter: 'blur(0px)', duration: DUR, ease: EASE }, START + STAGGER * 4)
-      // Arm
-      .to(videoRef.current, {
-        opacity: 1,
-        scale: 1,
-        filter: 'blur(0px)',
-        duration: 2.8,
-        ease: 'expo.out',
-        onStart: () => { videoRef.current?.play() },
-      }, START + STAGGER * 4 + 1.0)
-      // BottomNav — very last, slides up from below
-      .to('.js-bottom-nav', {
-        y: 0,
-        opacity: 1,
-        duration: 1.6,
-        ease: 'expo.out',
-        onComplete: onRevealComplete,
-      }, START + STAGGER * 4 + 1.0 + 1.2)
+    const nameChars = gsap.utils.toArray<HTMLElement>('.tw-char', nameRef.current)
+    const cursor = cursorRef.current!
 
-    // Cursor blink — starts once nameRef has mostly settled
-    const cursorTl = gsap.timeline({ delay: START + 0.6 })
-      .set(cursor, { opacity: 1 })
-      .to(cursor, {
-        opacity: 0,
-        duration: 0.48,
-        repeat: -1,
-        yoyo: true,
-        ease: 'sine.inOut',
-        repeatDelay: 0.12,
-      })
+    // Position cursor before first char and show it
+    if (nameChars.length > 0) {
+      nameChars[0].before(cursor)
+      gsap.set(cursor, { opacity: 1 })
+    }
 
-    // Typewriter loop — starts shortly after name appears
-    const TYPE_SPEED = 0.105
-    const DEL_SPEED  = 0.062
-    const HOLD       = 2.4
-    const LOOP_PAUSE = 0.7
-
-    const typeTl = gsap.timeline({ repeat: -1, delay: START + 0.7 })
+    // Char-by-char typewriter for the name
+    const typeTl = gsap.timeline({ delay: START })
     nameChars.forEach((char, i) => {
       typeTl.call(() => {
-        char.after(cursor)
         gsap.set(char, { opacity: 1 })
+        char.after(cursor)
       }, [], i * TYPE_SPEED)
     })
-    typeTl.to({}, { duration: HOLD }, nameChars.length * TYPE_SPEED)
-    const deleteStart = nameChars.length * TYPE_SPEED + HOLD
-    ;[...nameChars].reverse().forEach((char, i) => {
-      typeTl.call(() => {
-        char.before(cursor)
-        gsap.set(char, { opacity: 0 })
-      }, [], deleteStart + i * DEL_SPEED)
-    })
-    typeTl.to({}, { duration: LOOP_PAUSE }, deleteStart + nameChars.length * DEL_SPEED)
+    // Cursor blink after name is fully typed
+    typeTl.call(() => {
+      gsap.to(cursor, {
+        opacity: 0, duration: 0.52, repeat: -1,
+        yoyo: true, ease: 'sine.inOut', repeatDelay: 0.15,
+      })
+    }, [], nameChars.length * TYPE_SPEED + 0.15)
 
-    return () => {
-      revealTl.kill()
-      cursorTl.kill()
-      typeTl.kill()
-    }
+    // Left→right clip wipe for surrounding texts
+    const revealTl = gsap.timeline()
+    revealTl
+      .to(taglineRef.current, { clipPath: 'inset(0 0% 0 0)', duration: 1.1, ease: 'none' }, START + STAGGER)
+      .to(headingRef.current, { clipPath: 'inset(0 0% 0 0)', duration: 1.6, ease: 'none' }, START + STAGGER * 2)
+      .to(descRef.current,    { clipPath: 'inset(0 0% 0 0)', duration: 2.2, ease: 'none' }, START + STAGGER * 3)
+      .to(badgeRef.current,   { clipPath: 'inset(0 0% 0 0)', duration: 0.7, ease: 'none' }, START + STAGGER * 4)
+      .to(videoRef.current, {
+        opacity: 1, scale: 1, filter: 'blur(0px)',
+        duration: 2.8, ease: 'expo.out',
+        onStart: () => { videoRef.current?.play() },
+      }, START + STAGGER * 4 + 1.0)
+      .to('.js-bottom-nav', {
+        y: 0, opacity: 1, duration: 1.1, ease: 'back.out(2)',
+        onComplete: onRevealComplete,
+      }, START + STAGGER * 4 + 1.0 + 3.0)
+
+    return () => { revealTl.kill(); typeTl.kill() }
   }, [isRevealing, onRevealComplete])
 
   return (
     <section ref={sectionRef} className="relative min-h-screen bg-[#F9F6F1] overflow-hidden">
 
-      {/* ─── HAND — truly centered, large, borderless ──────────────────────────────
-          mix-blend-mode:multiply makes the white video bg disappear into the page crème */}
+      {/* ─── HAND ─────────────────────────────────────────────────────────────────── */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none max-md:opacity-20">
         <video
           ref={videoRef}
@@ -164,7 +138,7 @@ function HeroSection({ isRevealing, onRevealComplete }: HeroProps) {
         />
       </div>
 
-      {/* ─── TOP-LEFT — name as masthead ──────────────────────────────────────────── */}
+      {/* ─── TOP-LEFT — name ──────────────────────────────────────────────────────── */}
       <div
         ref={nameRef}
         className="absolute top-8 left-6 md:top-12 md:left-12 lg:top-16 lg:left-20 z-10"
@@ -173,23 +147,10 @@ function HeroSection({ isRevealing, onRevealComplete }: HeroProps) {
         <h1
           className="font-mondwest text-[28px] md:text-[38px] lg:text-[50px]
                      leading-none tracking-tight text-[#0D212C]"
-          aria-label="Jules Sore-Larregain"
         >
-          {'Jules'.split('').map((c, i) => (
-            <span key={`j${i}`} className="tw-char inline-block" style={{ opacity: 0 }}>{c}</span>
-          ))}
-          {/* space visible only on mobile where there's no line break */}
-          <span className="md:hidden tw-char inline-block" style={{ opacity: 0 }}>&nbsp;</span>
+          Jules<span className="md:hidden"> </span>
           <br className="hidden md:block" />
-          {'Sore-Larregain'.split('').map((c, i) => (
-            <span key={`s${i}`} className="tw-char inline-block" style={{ opacity: 0 }}>{c}</span>
-          ))}
-          <span
-            ref={cursorRef}
-            className="inline-block ml-0.5"
-            style={{ opacity: 0, fontWeight: 300, letterSpacing: 0, verticalAlign: '0.05em' }}
-            aria-hidden="true"
-          >|</span>
+          Sore-Larregain
         </h1>
       </div>
 
