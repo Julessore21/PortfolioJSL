@@ -23,8 +23,6 @@ export function usePreloader(
     let cancelled = false
     const videos = assets.videos ?? []
     const images = assets.images ?? []
-    const total = videos.length + images.length + 1
-
     const videoPromises = videos.map(src =>
       new Promise<void>(resolve => {
         const el = document.createElement('video')
