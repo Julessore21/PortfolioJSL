@@ -69,14 +69,20 @@ function HeroSection({ isRevealing, onRevealComplete }: HeroProps) {
   useEffect(() => {
     if (!isRevealing) return
 
-    const START   = 0.4
-    const STAGGER = 0.45
-    const TYPE_SPEED = 0.075  // seconds per character
+    const START      = 0.5
+    const STAGGER    = 0.7   // gap between each element starting
+    const TYPE_SPEED = 0.11  // seconds per char — name typewriter
+
+    // Character counts for stepped clip (1 step = 1 char)
+    const CHAR_DUR   = 0.09  // seconds per char for surrounding texts
+    const nTagline   = 42
+    const nHeading   = 38
+    const nDesc      = 82
+    const nBadge     = 22
 
     const nameChars = gsap.utils.toArray<HTMLElement>('.tw-char', nameRef.current)
     const cursor = cursorRef.current!
 
-    // Position cursor before first char and show it
     if (nameChars.length > 0) {
       nameChars[0].before(cursor)
       gsap.set(cursor, { opacity: 1 })
@@ -90,30 +96,45 @@ function HeroSection({ isRevealing, onRevealComplete }: HeroProps) {
         char.after(cursor)
       }, [], i * TYPE_SPEED)
     })
-    // Cursor blink after name is fully typed
     typeTl.call(() => {
       gsap.to(cursor, {
-        opacity: 0, duration: 0.52, repeat: -1,
+        opacity: 0, duration: 0.55, repeat: -1,
         yoyo: true, ease: 'sine.inOut', repeatDelay: 0.15,
       })
-    }, [], nameChars.length * TYPE_SPEED + 0.15)
+    }, [], nameChars.length * TYPE_SPEED + 0.2)
 
-    // Left→right clip wipe for surrounding texts
+    // Stepped clip wipe — each step = one character appearing
     const revealTl = gsap.timeline()
     revealTl
-      .to(taglineRef.current, { clipPath: 'inset(0 0% 0 0)', duration: 1.1, ease: 'none' }, START + STAGGER)
-      .to(headingRef.current, { clipPath: 'inset(0 0% 0 0)', duration: 1.6, ease: 'none' }, START + STAGGER * 2)
-      .to(descRef.current,    { clipPath: 'inset(0 0% 0 0)', duration: 2.2, ease: 'none' }, START + STAGGER * 3)
-      .to(badgeRef.current,   { clipPath: 'inset(0 0% 0 0)', duration: 0.7, ease: 'none' }, START + STAGGER * 4)
+      .to(taglineRef.current, {
+        clipPath: 'inset(0 0% 0 0)',
+        duration: nTagline * CHAR_DUR,
+        ease: `steps(${nTagline})`,
+      }, START + STAGGER)
+      .to(headingRef.current, {
+        clipPath: 'inset(0 0% 0 0)',
+        duration: nHeading * CHAR_DUR,
+        ease: `steps(${nHeading})`,
+      }, START + STAGGER * 2)
+      .to(descRef.current, {
+        clipPath: 'inset(0 0% 0 0)',
+        duration: nDesc * CHAR_DUR,
+        ease: `steps(${nDesc})`,
+      }, START + STAGGER * 3)
+      .to(badgeRef.current, {
+        clipPath: 'inset(0 0% 0 0)',
+        duration: nBadge * CHAR_DUR,
+        ease: `steps(${nBadge})`,
+      }, START + STAGGER * 4)
       .to(videoRef.current, {
         opacity: 1, scale: 1, filter: 'blur(0px)',
         duration: 2.8, ease: 'expo.out',
         onStart: () => { videoRef.current?.play() },
-      }, START + STAGGER * 4 + 1.0)
+      }, START + STAGGER * 4 + 1.2)
       .to('.js-bottom-nav', {
         y: 0, opacity: 1, duration: 1.1, ease: 'back.out(2)',
         onComplete: onRevealComplete,
-      }, START + STAGGER * 4 + 1.0 + 3.0)
+      }, START + STAGGER * 4 + 1.2 + 3.0)
 
     return () => { revealTl.kill(); typeTl.kill() }
   }, [isRevealing, onRevealComplete])
