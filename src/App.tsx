@@ -33,7 +33,6 @@ function HeroSection({ isRevealing, onRevealComplete }: HeroProps) {
   const sectionRef = useRef<HTMLElement>(null)
   const videoRef   = useRef<HTMLVideoElement>(null)
   const nameRef    = useRef<HTMLDivElement>(null)
-  const cursorRef  = useRef<HTMLSpanElement>(null)
   const taglineRef = useRef<HTMLDivElement>(null)
   const bottomRef  = useRef<HTMLDivElement>(null)
   const headingRef = useRef<HTMLHeadingElement>(null)
@@ -148,7 +147,6 @@ function HeroSection({ isRevealing, onRevealComplete }: HeroProps) {
 
     const TYPE_SPEED = 0.10
     const nameChars  = gsap.utils.toArray<HTMLElement>('.tw-char', nameRef.current)
-    const cursor     = cursorRef.current!
     const savedChars = nameChars.map(c => c.textContent ?? '')
 
     const surroundElems = [
@@ -166,37 +164,21 @@ function HeroSection({ isRevealing, onRevealComplete }: HeroProps) {
     })
     const eraseStart = maxWriteEnd + 3.0
 
-    if (nameChars.length > 0) {
-      nameChars[0].before(cursor)
-      gsap.set(cursor, { opacity: 1 })
-    }
-
-    // Reset cursor position + visibility on each loop iteration
-    tl.call(() => {
-      if (nameChars.length > 0) nameChars[0].before(cursor)
-      gsap.set(cursor, { opacity: 1 })
-    }, [], START)
-
     nameChars.forEach((char, i) => {
       const t = START + i * TYPE_SPEED
       for (let g = 0; g < WRITE_G; g++) {
         tl.call(() => {
           gsap.set(char, { opacity: 1 })
           char.textContent = GLYPHS[Math.floor(Math.random() * GLYPHS.length)]
-          char.after(cursor)
         }, [], t + g * GLITCH_DT)
       }
       tl.call(() => {
         char.textContent = savedChars[i]
-        char.after(cursor)
       }, [], t + WRITE_G * GLITCH_DT)
     })
 
     tl.call(() => {
-      gsap.to(cursor, {
-        opacity: 0, duration: 0.55, repeat: -1,
-        yoyo: true, ease: 'sine.inOut', repeatDelay: 0.15,
-      })
+
     }, [], START + nameChars.length * TYPE_SPEED + 0.2)
 
     ;[...nameChars].reverse().forEach((char, ri) => {
@@ -212,8 +194,7 @@ function HeroSection({ isRevealing, onRevealComplete }: HeroProps) {
       }, [], t + ERASE_G * GLITCH_DT)
     })
     tl.call(() => {
-      gsap.killTweensOf(cursor)
-      gsap.set(cursor, { opacity: 0 })
+
     }, [], eraseStart + nameChars.length * ERASE_DUR + ERASE_G * GLITCH_DT)
 
     surroundElems.forEach(({ el, ws }) => scheduleTextEl(el, ws, eraseStart))
@@ -272,12 +253,6 @@ function HeroSection({ isRevealing, onRevealComplete }: HeroProps) {
           {'Sore-Larregain'.split('').map((c, i) => (
             <span key={`s${i}`} className="tw-char inline-block" style={{ opacity: 0 }}>{c}</span>
           ))}
-          <span
-            ref={cursorRef}
-            className="inline-block ml-0.5"
-            style={{ opacity: 0, fontWeight: 300, letterSpacing: 0, verticalAlign: '0.05em' }}
-            aria-hidden="true"
-          >|</span>
         </h1>
       </div>
 
