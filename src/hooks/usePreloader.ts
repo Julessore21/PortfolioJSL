@@ -12,7 +12,7 @@ export interface PreloaderResult {
 
 export function usePreloader(
   assets: PreloaderAssets = {},
-  minDuration = 2800
+  minDuration = 1400
 ): PreloaderResult {
   const [visualProgress, setVisualProgress] = useState(0)
   const [isReady, setIsReady] = useState(false)

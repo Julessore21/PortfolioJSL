@@ -42,13 +42,8 @@ function HeroSection({ isRevealing, onRevealComplete }: HeroProps) {
 
   // ── Initial hidden state ─────────────────────────────────────────────────
   useEffect(() => {
-    // Name container visible — individual chars hidden in JSX (opacity:0)
-    gsap.set(nameRef.current, { opacity: 1 })
-    // Other texts: fully visible but clipped from the right
-    gsap.set(
-      [taglineRef.current, headingRef.current, descRef.current, badgeRef.current],
-      { opacity: 1, clipPath: 'inset(0 100% 0 0)' }
-    )
+    gsap.set(nameRef.current, { opacity: 1 }) // chars hidden individually in JSX
+    gsap.set([taglineRef.current, headingRef.current, descRef.current, badgeRef.current], { opacity: 0 })
     gsap.set(videoRef.current, { scale: 0.95, filter: 'blur(12px)', opacity: 0 })
     gsap.set('.js-bottom-nav', { y: 64, opacity: 0 })
   }, [])
@@ -65,78 +60,178 @@ function HeroSection({ isRevealing, onRevealComplete }: HeroProps) {
     })
   }, { scope: sectionRef })
 
-  // ── Orchestrated reveal ──────────────────────────────────────────────────
+  // ── Orchestrated reveal ──────────────────────────────────────────
   useEffect(() => {
     if (!isRevealing) return
 
-    const START      = 0.5
-    const STAGGER    = 0.7   // gap between each element starting
-    const TYPE_SPEED = 0.11  // seconds per char — name typewriter
+    const GLYPHS    = '█▓▒░ABXZ#@$%&01'
+    const START     = 0.5
+    const STAGGER   = 0.65
+    const CHAR_DUR  = 0.085
+    const WRITE_G   = 3
+    const ERASE_DUR = 0.038
+    const ERASE_G   = 2
+    const GLITCH_DT = 0.03
 
-    // Character counts for stepped clip (1 step = 1 char)
-    const CHAR_DUR   = 0.09  // seconds per char for surrounding texts
-    const nTagline   = 42
-    const nHeading   = 38
-    const nDesc      = 82
-    const nBadge     = 22
+    const tl = gsap.timeline({ repeat: -1 })
 
-    const nameChars = gsap.utils.toArray<HTMLElement>('.tw-char', nameRef.current)
-    const cursor = cursorRef.current!
+    function getTextNodes(el: HTMLElement) {
+      const result: Array<{ node: Text; chars: string[] }> = []
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT)
+      let n: Text | null
+      while ((n = walker.nextNode() as Text | null)) {
+        const text = n.textContent ?? ''
+        if (text.trim()) result.push({ node: n, chars: Array.from(text) })
+      }
+      return result
+    }
+
+    function scheduleTextEl(el: HTMLElement | null, writeStart: number, eraseStart: number) {
+      if (!el) return
+      const rawNodes = getTextNodes(el)
+      if (!rawNodes.length) return
+
+      let offset = 0
+      const nodeData = rawNodes.map(({ node, chars }) => {
+        const charOffset = offset
+        offset += chars.length
+        return { node, chars, charOffset }
+      })
+      const totalChars = offset
+
+      tl.call(() => { gsap.set(el, { opacity: 1 }) }, [], writeStart)
+
+      nodeData.forEach(({ node, chars, charOffset }) => {
+        const buf: string[] = chars.map(() => ' ')
+        tl.call(() => { node.textContent = buf.join('') }, [], writeStart)
+
+        chars.forEach((char, i) => {
+          const t = writeStart + (charOffset + i) * CHAR_DUR
+          if (!char.trim()) {
+            tl.call(() => { buf[i] = char; node.textContent = buf.join('') }, [], t)
+            return
+          }
+          for (let g = 0; g < WRITE_G; g++) {
+            tl.call(() => {
+              buf[i] = GLYPHS[Math.floor(Math.random() * GLYPHS.length)]
+              node.textContent = buf.join('')
+            }, [], t + g * GLITCH_DT)
+          }
+          tl.call(() => {
+            buf[i] = char
+            node.textContent = buf.join('')
+          }, [], t + WRITE_G * GLITCH_DT)
+        })
+
+        chars.forEach((char, i) => {
+          const eraseT = eraseStart + (totalChars - 1 - (charOffset + i)) * ERASE_DUR
+          if (!char.trim()) {
+            tl.call(() => { buf[i] = ' '; node.textContent = buf.join('') }, [], eraseT)
+            return
+          }
+          for (let g = 0; g < ERASE_G; g++) {
+            tl.call(() => {
+              buf[i] = GLYPHS[Math.floor(Math.random() * GLYPHS.length)]
+              node.textContent = buf.join('')
+            }, [], eraseT + g * GLITCH_DT)
+          }
+          tl.call(() => {
+            buf[i] = ' '
+            node.textContent = buf.join('')
+          }, [], eraseT + ERASE_G * GLITCH_DT)
+        })
+      })
+
+      tl.call(() => { gsap.set(el, { opacity: 0 }) }, [],
+        eraseStart + totalChars * ERASE_DUR + ERASE_G * GLITCH_DT + 0.1)
+    }
+
+    const TYPE_SPEED = 0.10
+    const nameChars  = gsap.utils.toArray<HTMLElement>('.tw-char', nameRef.current)
+    const cursor     = cursorRef.current!
+    const savedChars = nameChars.map(c => c.textContent ?? '')
+
+    const surroundElems = [
+      { el: taglineRef.current, ws: START + STAGGER },
+      { el: headingRef.current, ws: START + STAGGER * 2 },
+      { el: descRef.current,    ws: START + STAGGER * 3 },
+      { el: badgeRef.current,   ws: START + STAGGER * 4 },
+    ]
+
+    let maxWriteEnd = START + nameChars.length * TYPE_SPEED + WRITE_G * GLITCH_DT
+    surroundElems.forEach(({ el, ws }) => {
+      if (!el) return
+      const end = ws + Array.from(el.innerText).length * CHAR_DUR + WRITE_G * GLITCH_DT
+      if (end > maxWriteEnd) maxWriteEnd = end
+    })
+    const eraseStart = maxWriteEnd + 3.0
 
     if (nameChars.length > 0) {
       nameChars[0].before(cursor)
       gsap.set(cursor, { opacity: 1 })
     }
 
-    // Char-by-char typewriter for the name
-    const typeTl = gsap.timeline({ delay: START })
+    // Reset cursor position + visibility on each loop iteration
+    tl.call(() => {
+      if (nameChars.length > 0) nameChars[0].before(cursor)
+      gsap.set(cursor, { opacity: 1 })
+    }, [], START)
+
     nameChars.forEach((char, i) => {
-      typeTl.call(() => {
-        gsap.set(char, { opacity: 1 })
+      const t = START + i * TYPE_SPEED
+      for (let g = 0; g < WRITE_G; g++) {
+        tl.call(() => {
+          gsap.set(char, { opacity: 1 })
+          char.textContent = GLYPHS[Math.floor(Math.random() * GLYPHS.length)]
+          char.after(cursor)
+        }, [], t + g * GLITCH_DT)
+      }
+      tl.call(() => {
+        char.textContent = savedChars[i]
         char.after(cursor)
-      }, [], i * TYPE_SPEED)
+      }, [], t + WRITE_G * GLITCH_DT)
     })
-    typeTl.call(() => {
+
+    tl.call(() => {
       gsap.to(cursor, {
         opacity: 0, duration: 0.55, repeat: -1,
         yoyo: true, ease: 'sine.inOut', repeatDelay: 0.15,
       })
-    }, [], nameChars.length * TYPE_SPEED + 0.2)
+    }, [], START + nameChars.length * TYPE_SPEED + 0.2)
 
-    // Stepped clip wipe — each step = one character appearing
-    const revealTl = gsap.timeline()
-    revealTl
-      .to(taglineRef.current, {
-        clipPath: 'inset(0 0% 0 0)',
-        duration: nTagline * CHAR_DUR,
-        ease: `steps(${nTagline})`,
-      }, START + STAGGER)
-      .to(headingRef.current, {
-        clipPath: 'inset(0 0% 0 0)',
-        duration: nHeading * CHAR_DUR,
-        ease: `steps(${nHeading})`,
-      }, START + STAGGER * 2)
-      .to(descRef.current, {
-        clipPath: 'inset(0 0% 0 0)',
-        duration: nDesc * CHAR_DUR,
-        ease: `steps(${nDesc})`,
-      }, START + STAGGER * 3)
-      .to(badgeRef.current, {
-        clipPath: 'inset(0 0% 0 0)',
-        duration: nBadge * CHAR_DUR,
-        ease: `steps(${nBadge})`,
-      }, START + STAGGER * 4)
-      .to(videoRef.current, {
-        opacity: 1, scale: 1, filter: 'blur(0px)',
-        duration: 2.8, ease: 'expo.out',
-        onStart: () => { videoRef.current?.play() },
-      }, START + STAGGER * 4 + 1.2)
-      .to('.js-bottom-nav', {
-        y: 0, opacity: 1, duration: 1.1, ease: 'back.out(2)',
-        onComplete: onRevealComplete,
-      }, START + STAGGER * 4 + 1.2 + 3.0)
+    ;[...nameChars].reverse().forEach((char, ri) => {
+      const t = eraseStart + ri * ERASE_DUR
+      for (let g = 0; g < ERASE_G; g++) {
+        tl.call(() => {
+          char.textContent = GLYPHS[Math.floor(Math.random() * GLYPHS.length)]
+        }, [], t + g * GLITCH_DT)
+      }
+      tl.call(() => {
+        char.textContent = savedChars[nameChars.length - 1 - ri]
+        gsap.set(char, { opacity: 0 })
+      }, [], t + ERASE_G * GLITCH_DT)
+    })
+    tl.call(() => {
+      gsap.killTweensOf(cursor)
+      gsap.set(cursor, { opacity: 0 })
+    }, [], eraseStart + nameChars.length * ERASE_DUR + ERASE_G * GLITCH_DT)
 
-    return () => { revealTl.kill(); typeTl.kill() }
+    surroundElems.forEach(({ el, ws }) => scheduleTextEl(el, ws, eraseStart))
+
+    const videoStart = START + STAGGER * 4 + 1.2
+    gsap.to(videoRef.current, {
+      opacity: 1, scale: 1, filter: 'blur(0px)',
+      duration: 2.8, ease: 'expo.out',
+      delay: videoStart,
+      onStart: () => { videoRef.current?.play() },
+    })
+    gsap.to('.js-bottom-nav', {
+      y: 0, opacity: 1, duration: 1.1, ease: 'back.out(2)',
+      delay: videoStart + 3.0,
+      onComplete: onRevealComplete,
+    })
+
+    return () => { tl.kill() }
   }, [isRevealing, onRevealComplete])
 
   return (
@@ -163,15 +258,26 @@ function HeroSection({ isRevealing, onRevealComplete }: HeroProps) {
       <div
         ref={nameRef}
         className="absolute top-8 left-6 md:top-12 md:left-12 lg:top-16 lg:left-20 z-10"
-        style={{ opacity: 0 }}
       >
         <h1
           className="font-mondwest text-[28px] md:text-[38px] lg:text-[50px]
                      leading-none tracking-tight text-[#0D212C]"
+          aria-label="Jules Sore-Larregain"
         >
-          Jules<span className="md:hidden"> </span>
+          {'Jules'.split('').map((c, i) => (
+            <span key={`j${i}`} className="tw-char inline-block" style={{ opacity: 0 }}>{c}</span>
+          ))}
+          <span className="md:hidden tw-char inline-block" style={{ opacity: 0 }}>&nbsp;</span>
           <br className="hidden md:block" />
-          Sore-Larregain
+          {'Sore-Larregain'.split('').map((c, i) => (
+            <span key={`s${i}`} className="tw-char inline-block" style={{ opacity: 0 }}>{c}</span>
+          ))}
+          <span
+            ref={cursorRef}
+            className="inline-block ml-0.5"
+            style={{ opacity: 0, fontWeight: 300, letterSpacing: 0, verticalAlign: '0.05em' }}
+            aria-hidden="true"
+          >|</span>
         </h1>
       </div>
 
