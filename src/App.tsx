@@ -30,29 +30,26 @@ interface HeroProps {
 }
 
 function HeroSection({ isRevealing, onRevealComplete }: HeroProps) {
-  const sectionRef = useRef<HTMLElement>(null)
-  const videoRef   = useRef<HTMLVideoElement>(null)
-  const nameRef    = useRef<HTMLDivElement>(null)
-  const taglineRef = useRef<HTMLDivElement>(null)
-  const bottomRef  = useRef<HTMLDivElement>(null)
-  const headingRef = useRef<HTMLHeadingElement>(null)
-  const descRef    = useRef<HTMLParagraphElement>(null)
-  const badgeRef   = useRef<HTMLDivElement>(null)
+  const sectionRef  = useRef<HTMLElement>(null)
+  const videoRef    = useRef<HTMLVideoElement>(null)
+  const nameRef     = useRef<HTMLDivElement>(null)
+  const taglineRef  = useRef<HTMLDivElement>(null)
+  const bottomRef   = useRef<HTMLDivElement>(null)
+  const headingRef  = useRef<HTMLHeadingElement>(null)
+  const descRef     = useRef<HTMLParagraphElement>(null)
+  const badgeRef    = useRef<HTMLDivElement>(null)
+  const midRightRef = useRef<HTMLDivElement>(null)
 
   // ── Initial hidden state ─────────────────────────────────────────────────
   useEffect(() => {
     gsap.set(nameRef.current, { opacity: 1 }) // chars hidden individually in JSX
-    gsap.set([taglineRef.current, headingRef.current, descRef.current, badgeRef.current], { opacity: 0 })
+    gsap.set([taglineRef.current, headingRef.current, descRef.current, badgeRef.current, midRightRef.current], { opacity: 0 })
     gsap.set(videoRef.current, { scale: 0.95, filter: 'blur(12px)', opacity: 0 })
     gsap.set('.js-bottom-nav', { y: 64, opacity: 0 })
   }, [])
 
   // ── Scroll parallax ──────────────────────────────────────────────────────
   useGSAP(() => {
-    gsap.to(videoRef.current, {
-      y: -50, ease: 'none',
-      scrollTrigger: { trigger: sectionRef.current, start: 'top top', end: 'bottom top', scrub: 2.5 },
-    })
     gsap.to(bottomRef.current, {
       y: -36, ease: 'none',
       scrollTrigger: { trigger: sectionRef.current, start: 'top top', end: 'bottom top', scrub: 1.3 },
@@ -150,10 +147,11 @@ function HeroSection({ isRevealing, onRevealComplete }: HeroProps) {
     const savedChars = nameChars.map(c => c.textContent ?? '')
 
     const surroundElems = [
-      { el: taglineRef.current, ws: START + STAGGER },
-      { el: headingRef.current, ws: START + STAGGER * 2 },
-      { el: descRef.current,    ws: START + STAGGER * 3 },
-      { el: badgeRef.current,   ws: START + STAGGER * 4 },
+      { el: taglineRef.current,  ws: START + STAGGER },
+      { el: headingRef.current,  ws: START + STAGGER * 2 },
+      { el: midRightRef.current, ws: START + STAGGER * 2.5 },
+      { el: descRef.current,     ws: START + STAGGER * 3 },
+      { el: badgeRef.current,    ws: START + STAGGER * 4 },
     ]
 
     let maxWriteEnd = START + nameChars.length * TYPE_SPEED + WRITE_G * GLITCH_DT
@@ -265,6 +263,22 @@ function HeroSection({ isRevealing, onRevealComplete }: HeroProps) {
         <p className="text-[9px] md:text-[10px] text-[#0D212C]/50 leading-loose tracking-widest uppercase">
           Freelance IA &amp; Dev Web<br />
           Aix-en-Provence
+        </p>
+      </div>
+
+      {/* ─── MIDDLE-RIGHT — copywriting ───────────────────────────────────────────── */}
+      <div
+        ref={midRightRef}
+        className="absolute right-6 md:right-12 lg:right-20 top-1/2 -translate-y-1/2 z-10 text-right"
+        style={{ opacity: 0 }}
+      >
+        <p className="text-xs md:text-sm text-[#0D212C]/55 leading-relaxed tracking-wide max-w-50 md:max-w-60">
+          Pas de template, pas de compromis.
+          Du sur-mesure de A à Z — conception,
+          design, code et déploiement.
+          Pour que votre produit reflète
+          exactement votre vision,
+          et qu'il tienne dans le temps.
         </p>
       </div>
 
